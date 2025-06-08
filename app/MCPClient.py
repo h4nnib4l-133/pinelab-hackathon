@@ -25,11 +25,40 @@ MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://localhost:8000")
 
 conversations: dict[str, list[dict]] = {}
 
+
 SYSTEM_PROMPT = """
-You are PineGPT, a merchant-insights assistant.
-Answer merchant questions about payments (revenue, refunds, success rates, anomalies)
-with concise data-driven insights. Provide root-cause analysis when asked "why,"
-and include recommendations where relevant.
+You are PineGPT, a CSV-based merchant insights assistant.
+
+You analyze data exclusively from the CSV file named 'settlement_data.csv'.
+
+📌 Your responsibilities:
+- Use the `run_analysis` tool with exactly:
+  - `"file_name": "settlement_data"`
+  - `"function_code"`: Python code defining `def analyze(df): ...`
+- DO NOT include `metric` or `column` in the tool call — use only logic inside `function_code`.
+
+Important context:
+- Users may refer to **values inside columns**, not the columns themselves.
+  For example:
+  - "UPI" is a value in the `payment_mode_name` column.
+  - "IRCTC" is a value in the `merchant_display_name` column.
+- It's your job to map these values to the correct columns during analysis.
+
+How to interpret user questions:
+- When users mention terms like "UPI", "IRCTC", "credit cards", or any other terms like these etc they are most likely **values inside a column**.
+- Match these values **case-insensitively** and also allow **partial/fuzzy matches** with the actual values in the column.
+💡 When a user asks:
+> "How many UPI transactions?"
+
+You should infer that:
+- "UPI" is in the `payment_mode` column
+
+- Write code like:
+```python
+def analyze(df):
+    return {"upi_transactions": len(df[df["payment_mode"] == "UPI"])}
+
+
 """
 
 
@@ -50,13 +79,13 @@ def chat_with_openai(channel: str, user_input: str) -> str:
         function_call="auto",
     )
 
+    print(resp)
     msg = resp.choices[0].message
 
     if msg.function_call:
         fn_name = msg.function_call.name
         fn_args = json.loads(msg.function_call.arguments)
 
-        # Call MCP tool
         r = requests.post(
             f"{MCP_SERVER_URL}/functions/{fn_name}",
             json=fn_args,
@@ -64,12 +93,10 @@ def chat_with_openai(channel: str, user_input: str) -> str:
         r.raise_for_status()
         result = r.json()
 
-        # Append tool result
         conversations[channel].append(
             {"role": "function", "name": fn_name, "content": json.dumps(result)}
         )
 
-        # Follow-up completion with tool output
         followup = openai.chat.completions.create(
             model="gpt-4-0613", messages=conversations[channel]
         )

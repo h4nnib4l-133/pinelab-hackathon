@@ -116,7 +116,7 @@ def init_db():
     conn.close()
 
 
-@app.post("/run_analysis", response_model=AnalyticsResponse)
+@app.post("/functions/run_analysis", response_model=AnalyticsResponse)
 def run_analysis(req: AnalyticsRequest):
     if req.file_name:
         filename = req.file_name
@@ -147,7 +147,7 @@ def run_analysis(req: AnalyticsRequest):
         return AnalyticsResponse(file_name=filename, result={}, error=str(e))
 
 
-@app.post("/create_alert")
+@app.post("/functions/create_alert")
 def create_alert(req: CreateAlertRequest):
     conn = sqlite3.connect(DB_PATH)
     try:
@@ -186,7 +186,7 @@ def create_alert(req: CreateAlertRequest):
     return {"status": "scheduled", "job_name": req.job_name}
 
 
-@app.delete("/close_alert/{job_name}", response_model=CloseAlertResponse)
+@app.delete("/functions/close_alert/{job_name}", response_model=CloseAlertResponse)
 def close_alert(job_name: str):
     try:
         scheduler.remove_job(job_name)
