@@ -1,0 +1,138 @@
+{
+  "functions": [
+    {
+      "name": "run_analysis",
+      "description": "Execute a custom Python analyze(df) function over a CSV and return its JSON result. You can specify file_name, metric, or column (exact header) to select the CSV.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_name": {
+            "type": "string",
+            "description": "Optional. CSV name (without .csv) to use."
+          },
+          "metric": {
+            "type": "string",
+            "description": "Optional. Header keyword to fuzzy-match a column and pick the CSV."
+          },
+          "column": {
+            "type": "string",
+            "description": "Optional. Exact column header to select the CSV.",
+            "enum": [
+              "acquirer_name",
+              "acquirer_response_code",
+              "acquirer_response_description",
+              "actual_txn_amount",
+              "additonal_taxes",
+              "amount",
+              "amount_to_be_deducted_in_addition_to_bank_charges",
+              "axis_payout_created",
+              "bank_charge_amount",
+              "bank_commision",
+              "bank_service_tax",
+              "batch_id",
+              "batch_id.1",
+              "business_technical_decline",
+              "card_type_association_name",
+              "category",
+              "convenience_fees_additional_amt_in_paise",
+              "convenience_fees_amt_in_paise",
+              "convenience_fees_gst_amt_in_paise",
+              "is_aggregator",
+              "is_not_on_sell_rate",
+              "is_reversal",
+              "issuer_name",
+              "mard_amount",
+              "mdr_charge",
+              "mdr_tax",
+              "merchant_display_name",
+              "nodal_account_bank",
+              "payment_mode_id",
+              "payment_mode_name",
+              "payout_nodal_acc",
+              "payout_status",
+              "pine_pg_integration_mode_name",
+              "platform_fee",
+              "program_name",
+              "refund_amount",
+              "sale_txn_date_time",
+              "sds",
+              "sdscycle",
+              "settlement_amount",
+              "time_to_complete",
+              "transaction_id",
+              "transaction_id.1",
+              "transaction_response_code",
+              "transaction_response_message",
+              "transaction_start_date_time",
+              "transaction_type_id",
+              "transaction_type_name",
+              "txn_completion_date_time",
+              "txn_refund_amt",
+              "txn_status_name",
+              "txn_step_name"
+            ]
+          },
+          "function_code": {
+            "type": "string",
+            "description": "Required. Python code defining def analyze(df): ..."
+          }
+        },
+        "required": [
+          "function_code"
+        ]
+      }
+    },
+    {
+      "name": "create_alert",
+      "description": "Schedule a recurring job that runs a custom analyze(df) on a CSV and records triggered alerts.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "job_name": {
+            "type": "string",
+            "description": "Unique identifier for the alert."
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Cron specification (m h D M W) for running the alert."
+          },
+          "file_name": {
+            "type": "string",
+            "description": "CSV name (without .csv) to analyze."
+          },
+          "function_code": {
+            "type": "string",
+            "description": "Python code defining def analyze(df): ..."
+          },
+          "condition_code": {
+            "type": "string",
+            "description": "Boolean Python expression evaluating the result, e.g. \"result['total'] > 1000\"."
+          }
+        },
+        "required": [
+          "job_name",
+          "schedule",
+          "file_name",
+          "function_code",
+          "condition_code"
+        ]
+      }
+    },
+    {
+      "name": "close_alert",
+      "description": "Cancel a scheduled alert and remove it from persistence.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "job_name": {
+            "type": "string",
+            "description": "Identifier of the alert to cancel."
+          }
+        },
+        "required": [
+          "job_name"
+        ]
+      }
+    }
+  ]
+}
